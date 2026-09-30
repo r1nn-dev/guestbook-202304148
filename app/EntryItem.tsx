@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { LIMITS } from "@/lib/validation";
+import { MessageInput, isMessageTooLong } from "./MessageInput";
+import { PasswordInput } from "./PasswordInput";
 import { useApiSubmit } from "./useApiSubmit";
 
 type Props = {
@@ -16,8 +17,21 @@ type Mode = "view" | "edit" | "delete";
 
 // 수정·삭제 패널마다 다른 부분을 한곳에 모은다.
 const PANELS = {
-  edit: { method: "PATCH", submitLabel: "저장", submitClass: "bg-gray-900", showsDraft: true },
-  delete: { method: "DELETE", submitLabel: "삭제", submitClass: "bg-red-600", showsDraft: false },
+  edit: {
+    method: "PATCH",
+    submitLabel: "저장",
+    submitClass: "bg-gray-900",
+    showsDraft: true,
+    hint: "작성자 이름은 수정할 수 없고, 메시지만 수정할 수 있습니다.",
+  },
+  delete: {
+    method: "DELETE",
+    submitLabel: "삭제",
+    submitClass: "bg-red-600",
+    showsDraft: false,
+    // 강제 삭제는 같은 삭제 폼에서 관리자 비밀번호로 한다 (docs/adr/0003).
+    hint: "관리자 비밀번호도 사용할 수 있습니다.",
+  },
 } as const;
 
 export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
@@ -26,6 +40,7 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
   const [password, setPassword] = useState("");
   const { pending, error, setError, submit } = useApiSubmit();
   const panel = mode === "view" ? null : PANELS[mode];
+  const submitDisabled = pending || (panel?.showsDraft === true && isMessageTooLong(draft));
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -67,34 +82,21 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-2">
+          <p className="text-xs text-gray-500">{panel.hint}</p>
           {panel.showsDraft && (
-            <>
-              <p className="text-xs text-gray-500">작성자 이름은 수정할 수 없고, 메시지만 수정할 수 있습니다.</p>
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                maxLength={LIMITS.message.max}
-                required
-                rows={3}
-                className="w-full rounded border border-gray-300 px-3 py-2"
-              />
-            </>
+            <MessageInput value={draft} onChange={setDraft} submitDisabled={submitDisabled} />
           )}
           <div className="flex flex-wrap gap-2">
-            <input
-              type="password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
               placeholder="비밀번호"
-              minLength={LIMITS.password.min}
-              maxLength={LIMITS.password.max}
-              required
               autoComplete="current-password"
-              className="flex-1 rounded border border-gray-300 px-3 py-1.5 text-sm"
+              className="flex-1 text-sm"
             />
             <button
               type="submit"
-              disabled={pending}
+              disabled={submitDisabled}
               className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${panel.submitClass}`}
             >
               {panel.submitLabel}

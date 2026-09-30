@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { LIMITS } from "@/lib/validation";
+import { MessageInput, isMessageTooLong } from "./MessageInput";
+import { PasswordInput } from "./PasswordInput";
 import { useApiSubmit } from "./useApiSubmit";
 
 export function EntryForm() {
@@ -9,6 +11,7 @@ export function EntryForm() {
   const [message, setMessage] = useState("");
   const [password, setPassword] = useState("");
   const { pending, error, submit } = useApiSubmit();
+  const submitDisabled = pending || isMessageTooLong(message);
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,31 +34,24 @@ export function EntryForm() {
           required
           className="flex-1 rounded border border-gray-300 px-3 py-2"
         />
-        <input
-          type="password"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
           placeholder={`비밀번호 (${LIMITS.password.min}~${LIMITS.password.max}자)`}
-          minLength={LIMITS.password.min}
-          maxLength={LIMITS.password.max}
-          required
           autoComplete="new-password"
-          className="flex-1 rounded border border-gray-300 px-3 py-2"
+          className="flex-1"
         />
       </div>
-      <textarea
+      <MessageInput
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder={`메시지 (${LIMITS.message.max}자 이내)`}
-        maxLength={LIMITS.message.max}
-        required
-        rows={3}
-        className="w-full rounded border border-gray-300 px-3 py-2"
+        onChange={setMessage}
+        submitDisabled={submitDisabled}
+        placeholder={`메시지 (${LIMITS.message.max}자 이내, Ctrl+Enter로 등록)`}
       />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
-        disabled={pending}
+        disabled={submitDisabled}
         className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
       >
         {pending ? "등록 중…" : "등록"}

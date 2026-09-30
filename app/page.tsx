@@ -12,7 +12,7 @@ export default async function Home() {
     <div className="space-y-6">
       <EntryForm />
       <section>
-        <h2 className="mb-3 font-semibold">전체 글 {entries.length}개</h2>
+        <h2 className="sr-only">방명록</h2>
         {entries.length === 0 ? (
           <p className="text-gray-500">아직 글이 없습니다. 첫 글을 남겨보세요.</p>
         ) : (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashPassword, verifyPassword } from "./password";
+import { hashPassword, isAdminPassword, verifyPassword } from "./password";
 
 describe("hashPassword", () => {
   it("hex salt(16바이트)와 hex hash(64바이트)를 콜론으로 이은 문자열을 만든다", async () => {
@@ -36,5 +36,33 @@ describe("verifyPassword", () => {
   it("콜론으로 나뉜 조각이 셋 이상인 저장값은 맞는 비밀번호라도 거부한다", async () => {
     const stored = await hashPassword("1234");
     expect(await verifyPassword("1234", `${stored}:junk`)).toBe(false);
+  });
+});
+
+describe("isAdminPassword", () => {
+  const admin = "correct-horse-battery-staple";
+
+  it("관리자 비밀번호와 같으면 통과한다", () => {
+    expect(isAdminPassword(admin, admin)).toBe(true);
+  });
+
+  it("다르면 거부한다", () => {
+    expect(isAdminPassword("wrong-horse-battery-staple", admin)).toBe(false);
+  });
+
+  it("길이가 달라도 예외 없이 거부한다", () => {
+    expect(isAdminPassword("1234", admin)).toBe(false);
+    expect(isAdminPassword(`${admin}-longer`, admin)).toBe(false);
+  });
+
+  it("앞뒤 공백 한 글자만 달라도 거부한다", () => {
+    expect(isAdminPassword(` ${admin}`, admin)).toBe(false);
+    expect(isAdminPassword(`${admin} `, admin)).toBe(false);
+  });
+
+  it.each([undefined, ""])("관리자 비밀번호가 설정되지 않았으면(%j) 어떤 입력도 거부한다", (configured) => {
+    expect(isAdminPassword("", configured)).toBe(false);
+    expect(isAdminPassword("1234", configured)).toBe(false);
+    expect(isAdminPassword(admin, configured)).toBe(false);
   });
 });

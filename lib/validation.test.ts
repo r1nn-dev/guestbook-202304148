@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCreateInput, parseDeleteInput, parseEntryId, parseUpdateInput } from "./validation";
+import { countChars, parseCreateInput, parseDeleteInput, parseEntryId, parseUpdateInput } from "./validation";
 
 const valid = { name: "하린", message: "안녕하세요", password: "1234" };
 
@@ -118,5 +118,29 @@ describe("parseDeleteInput", () => {
 
   it("요청 본문이 없으면 잘못된 요청이다", () => {
     expect(parseDeleteInput(undefined)).toEqual({ ok: false, error: "잘못된 요청입니다." });
+  });
+});
+
+describe("countChars", () => {
+  it("이모지를 눈에 보이는 대로 한 글자로 센다", () => {
+    expect(countChars("😀😀", { trim: false })).toBe(2);
+  });
+
+  it("한글과 줄바꿈이 섞여도 코드포인트 수를 센다", () => {
+    expect(countChars("안녕\n하세요", { trim: false })).toBe(6);
+  });
+
+  it("trim 옵션이면 앞뒤 공백을 빼고 센다", () => {
+    expect(countChars("  안녕 \n", { trim: true })).toBe(2);
+    expect(countChars("  안녕 \n", { trim: false })).toBe(6);
+  });
+
+  it("500자 경계에서 메시지 검증과 같은 판정을 낸다", () => {
+    const at500 = ` ${"😀".repeat(500)} `;
+    const at501 = "😀".repeat(501);
+    expect(countChars(at500, { trim: true })).toBe(500);
+    expect(parseCreateInput({ name: "하린", message: at500, password: "1234" }).ok).toBe(true);
+    expect(countChars(at501, { trim: true })).toBe(501);
+    expect(parseCreateInput({ name: "하린", message: at501, password: "1234" }).ok).toBe(false);
   });
 });

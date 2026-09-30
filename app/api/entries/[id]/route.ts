@@ -1,11 +1,12 @@
 import { deleteEntry, findPasswordHash, updateMessage } from "@/lib/entries";
 import { errorResponse, readJson, withErrorResponse } from "@/lib/http";
-import { verifyPassword } from "@/lib/password";
+import { isAdminPassword, verifyPassword } from "@/lib/password";
 import { ERRORS, parseDeleteInput, parseEntryId, parseUpdateInput } from "@/lib/validation";
 
 type Context = RouteContext<"/api/entries/[id]">;
 
 // 판정 순서: 400(글 번호 → 요청 본문) → 404(글 없음) → 403(비밀번호 불일치)
+// DELETE만 400 다음에 관리자 비밀번호를 먼저 비교한다. 맞으면 바로 삭제(없는 글이면 404).
 
 // 글쓴이인지 확인한다. 통과하면 null, 아니면 돌려줄 404/403 응답.
 async function checkEntryPassword(id: string, password: string): Promise<Response | null> {
@@ -35,8 +36,11 @@ export const DELETE = withErrorResponse(async (request: Request, ctx: Context) =
   const input = parseDeleteInput(await readJson(request));
   if (!input.ok) return errorResponse(400, input.error);
 
-  const denied = await checkEntryPassword(id.value, input.value.password);
-  if (denied) return denied;
+  // 강제 삭제: 관리자 비밀번호가 맞으면 글 비밀번호 확인을 건너뛴다 (docs/adr/0003).
+  if (!isAdminPassword(input.value.password, process.env.ADMIN_PASSWORD)) {
+    const denied = await checkEntryPassword(id.value, input.value.password);
+    if (denied) return denied;
+  }
 
   if (!(await deleteEntry(id.value))) return errorResponse(404, ERRORS.notFound);
   return new Response(null, { status: 204 });

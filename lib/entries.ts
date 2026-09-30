@@ -62,3 +62,8 @@ export async function deleteEntry(id: string): Promise<boolean> {
   const rows = await sql`delete from entries where id = ${id} returning id`;
   return rows.length > 0;
 }
+
+export async function countEntries(): Promise<number> {
+  const rows = await sql`select count(*)::int as count from entries`;
+  return rows[0].count as number;
+}

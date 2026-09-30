@@ -27,8 +27,13 @@ export type DeleteInput = { password: string };
 type Limit = { min: number; max: number };
 
 // Postgres char_length와 같은 코드포인트 기준으로 센다. 이모지 하나는 .length로 2지만 여기서는 1.
+// 화면의 글자 수 표시도 이 함수를 써서 서버 판정과 어긋나지 않게 한다.
+export function countChars(value: string, { trim }: { trim: boolean }): number {
+  return [...(trim ? value.trim() : value)].length;
+}
+
 function withinLimit(value: string, limit: Limit): boolean {
-  const length = [...value].length;
+  const length = countChars(value, { trim: false });
   return length >= limit.min && length <= limit.max;
 }
 
