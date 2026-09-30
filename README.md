@@ -1,62 +1,114 @@
 # 미니 방명록
 
-회원가입 없이 누구나 이름, 메시지, 글 비밀번호만으로 글을 남기는 한 페이지짜리 방명록입니다.
+SDD(Spec-Driven Development) 방식으로 만든 미니 방명록 웹앱.  
+회원가입·로그인 없이 이름과 비밀번호만으로 글을 남기고, 본인 글을 수정·삭제할 수 있다.
 
-- 개발자: 조하린 (202304148)
-- 저장소: https://github.com/r1nn-dev/guestbook-202304148
+- **배포 URL**: https://guestbook-<학번>.vercel.app
+- **개발자**: 홍길동 · 20231234
 
-## 기능
+---
 
-- **글 남기기:** 작성자 이름(1~20자), 메시지(1~500자), 글 비밀번호(4~50자)를 입력합니다. 이름과 메시지는 앞뒤 공백을 제거합니다.
-- **방명록 보기:** 최신 작성 순으로 보여주고, 작성 시각은 KST로 표시합니다. 헤더에 총 글 수가 나옵니다.
-- **수정·삭제:** 글 안에서 글 비밀번호를 입력해 메시지를 수정하거나 글을 삭제합니다. 비밀번호가 틀리면 "비밀번호가 일치하지 않습니다."가 표시됩니다. 수정된 글에는 "수정됨"이 붙습니다.
-- **강제 삭제:** 관리자는 삭제 폼에 관리자 비밀번호(`ADMIN_PASSWORD`)를 입력해 어떤 글이든 지울 수 있습니다. 수정은 할 수 없습니다.
-- **편의 기능:**
-  - 메시지 글자 수 표시(`123/500`, 이모지는 1글자)
-  - Ctrl/Cmd+Enter로 등록
-  - 비밀번호 보기 토글
-  - 로딩 스켈레톤
-  - 오류 화면(다시 시도)
+## 주요 기능
+
+| 기능 | 설명 |
+| --- | --- |
+| 글 작성 | 이름, 메시지, 비밀번호를 입력해 글을 남긴다. |
+| 글 조회 | 전체 글을 최신 작성 순으로 본다. |
+| 글 수정 | 작성 시 설정한 비밀번호로 메시지를 수정한다. 틀리면 거부되고 안내가 표시된다. |
+| 글 삭제 | 작성 시 설정한 비밀번호로 글을 삭제한다. 틀리면 거부되고 안내가 표시된다. |
+| 관리자 삭제 | 관리자 비밀번호로 글쓴이 비밀번호 없이 어떤 글이든 삭제한다. |
+
+---
 
 ## 기술 스택
 
-Next.js 16 (App Router), TypeScript, Tailwind CSS 4, Neon Postgres(`@neondatabase/serverless`, ORM 없이 `sql` 태그드 템플릿), Vercel, Vitest
+| 분류 | 사용 기술 |
+| --- | --- |
+| 프레임워크 | Next.js 16 (App Router) + TypeScript |
+| 데이터베이스 | Neon Postgres (`@neondatabase/serverless`, ORM 없이 raw SQL) |
+| 스타일 | Tailwind CSS |
+| 테스트 | Vitest (입력 검증·비밀번호 해시 순수 로직) |
+| 배포 | Vercel |
+| 개발 도구 | Claude Code + Matt Pocock's Skills (SDD) |
 
-## 실행
+---
+
+## 설계 결정
+
+- **비밀번호 저장**: scrypt + 랜덤 salt로 해시해 `salt:hash` 형태로 저장한다. 평문은 어디에도 저장하지 않는다.
+- **비밀번호 비교**: `timingSafeEqual`로 타이밍 공격을 방지한다.
+- **입력 검증**: 클라이언트(`maxLength`)는 UX, API Route가 실제 방어, DB `CHECK` 제약이 최종 방어 역할을 한다.
+- **캐시 방지**: `export const dynamic = "force-dynamic"`으로 목록을 요청마다 DB에서 읽는다.
+- **민감 정보 보호**: `select *` 대신 필요한 열만 명시해 `password_hash`가 응답에 포함되지 않게 한다.
+
+---
+
+## 로컬 실행
+
+**1. 의존성 설치**
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm test         # 순수 로직 테스트 (입력 검증, 비밀번호, KST 표시)
-npm run build
 ```
 
-`.env.local`에 아래 환경 변수가 필요합니다. 배포 환경(Vercel)에도 같은 값을 넣어야 합니다.
+**2. 환경변수 설정**
 
-| 이름 | 설명 |
-| --- | --- |
-| `DATABASE_URL` | Neon Postgres 연결 문자열. 로컬과 배포가 같은 DB를 씁니다. |
-| `ADMIN_PASSWORD` | 강제 삭제용 관리자 비밀번호. 16~50자 무작위 값. 없으면 강제 삭제가 꺼집니다. |
+프로젝트 루트에 `.env.local` 파일을 만들고 아래 값을 입력한다.
 
-DB 스키마는 [db/schema.sql](db/schema.sql)에 있습니다. Neon에서 직접 실행하며, 마이그레이션 도구는 쓰지 않습니다.
+```
+DATABASE_URL=postgresql://<사용자>:<비밀번호>@<호스트>/<DB이름>?sslmode=require
+ADMIN_PASSWORD=<관리자 비밀번호 — 16자 이상 권장>
+```
+
+**3. DB 스키마 적용**
+
+Neon SQL Editor에서 `db/schema.sql`을 실행한다.
+
+**4. 개발 서버 실행**
+
+```bash
+npm run dev   # http://localhost:3000
+```
+
+**5. 테스트 실행**
+
+```bash
+npm run test
+```
+
+---
+
+## 프로젝트 구조
+
+```
+app/
+├── api/entries/
+│   ├── route.ts          # GET(목록 조회), POST(글 작성)
+│   └── [id]/route.ts     # PATCH(수정), DELETE(삭제 + 관리자 강제 삭제)
+├── entry-form.tsx         # 작성 폼 (Client Component)
+├── entry-item.tsx         # 글 카드 + 수정·삭제 폼 (Client Component)
+├── error.tsx              # 오류 화면
+├── loading.tsx            # 로딩 스켈레톤
+└── page.tsx               # 목록 화면 (Server Component)
+lib/
+├── db.ts                  # Neon SQL 클라이언트
+├── developer.ts           # 개발자 정보 상수
+├── entry.ts               # 입력 검증 (순수 함수)
+├── entry.test.ts          # 단위 테스트
+└── password.ts            # 비밀번호 해시·검증
+db/
+└── schema.sql             # 테이블 생성 SQL
+```
+
+---
 
 ## API
 
-| 요청 | 성공 | 실패 |
-| --- | --- | --- |
-| `GET /api/entries` | 200 글 배열 | 500 |
-| `POST /api/entries` `{ name, message, password }` | 201 생성된 글 | 400 |
-| `PATCH /api/entries/[id]` `{ message, password }` | 200 수정된 글 | 400 / 404 / 403 |
-| `DELETE /api/entries/[id]` `{ password }` | 204 | 400 / 404 / 403 |
+| 메서드 | 경로 | 요청 본문 | 응답 |
+| --- | --- | --- | --- |
+| `GET` | `/api/entries` | — | `200` 글 목록 (최신순) |
+| `POST` | `/api/entries` | `{ name, message, password }` | `201` 생성된 글 / `400` 검증 실패 |
+| `PATCH` | `/api/entries/[id]` | `{ message, password }` | `200` 수정된 글 / `400` / `403` / `404` |
+| `DELETE` | `/api/entries/[id]` | `{ password }` | `204` / `400` / `403` / `404` |
 
-- 오류 응답은 모두 `{ "error": "안내 문구" }` 모양입니다.
-- 비밀번호와 해시는 어떤 응답에도 담지 않습니다.
-
-## 문서
-
-- [CONTEXT.md](CONTEXT.md): 용어집
-- [docs/adr/](docs/adr/): 설계 결정 기록
-  - 0001: 비밀번호 해시 형식
-  - 0002: 로컬과 배포가 DB 하나를 같이 씀
-  - 0003: 강제 삭제
-- [.scratch/](.scratch/): 스펙과 티켓
+모든 오류 응답은 `{ "error": "안내 문구" }` 형태로 통일된다.
