@@ -37,3 +37,19 @@ export async function createEntry(name: string, message: string, passwordHash: s
   `;
   return toEntry(rows[0]);
 }
+
+export async function findPasswordHash(id: string): Promise<string | null> {
+  const rows = await sql`select password_hash from entries where id = ${id}`;
+  return rows.length === 0 ? null : (rows[0].password_hash as string);
+}
+
+// 비밀번호 확인과 수정 사이에 글이 지워졌으면 null
+export async function updateMessage(id: string, message: string): Promise<Entry | null> {
+  const rows = await sql`
+    update entries
+    set message = ${message}, updated_at = now()
+    where id = ${id}
+    returning id, name, message, created_at, updated_at
+  `;
+  return rows.length === 0 ? null : toEntry(rows[0]);
+}

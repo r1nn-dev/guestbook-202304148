@@ -1,6 +1,7 @@
 import { listEntries } from "@/lib/entries";
 import { formatKst } from "@/lib/format";
 import { EntryForm } from "./EntryForm";
+import { EntryItem } from "./EntryItem";
 
 export const dynamic = "force-dynamic";
 
@@ -17,16 +18,15 @@ export default async function Home() {
         ) : (
           <ul className="space-y-3">
             {entries.map((entry) => (
-              <li key={entry.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="font-semibold">{entry.name}</span>
-                  <span className="text-xs text-gray-500">
-                    {formatKst(entry.createdAt)}
-                    {entry.updatedAt !== null && " (수정됨)"}
-                  </span>
-                </div>
-                <p className="mt-2 whitespace-pre-wrap break-words">{entry.message}</p>
-              </li>
+              // 수정되면 key가 바뀌어 편집 상태가 새 메시지로 초기화된다.
+              <EntryItem
+                key={`${entry.id}-${entry.updatedAt ?? ""}`}
+                id={entry.id}
+                name={entry.name}
+                message={entry.message}
+                createdAtText={formatKst(entry.createdAt)}
+                edited={entry.updatedAt !== null}
+              />
             ))}
           </ul>
         )}

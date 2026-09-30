@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ERRORS, parseCreateInput } from "./validation";
+import { ERRORS, parseCreateInput, parseEntryId, parseUpdateInput } from "./validation";
 
 const valid = { name: "하린", message: "안녕하세요", password: "1234" };
 
@@ -64,5 +64,46 @@ describe("parseCreateInput", () => {
   it("안내 문구를 상수로 내보낸다", () => {
     expect(ERRORS.passwordMismatch).toBe("비밀번호가 일치하지 않습니다.");
     expect(ERRORS.notFound).toBe("글을 찾을 수 없습니다.");
+  });
+});
+
+describe("parseUpdateInput", () => {
+  it("메시지를 trim하고, 작성자 이름이 들어와도 무시한다", () => {
+    expect(parseUpdateInput({ name: "바꾸려는 이름", message: " 수정 ", password: "1234" })).toEqual({
+      ok: true,
+      value: { message: "수정", password: "1234" },
+    });
+  });
+
+  it("글 비밀번호는 공백을 제거하지 않는다", () => {
+    expect(parseUpdateInput({ message: "수정", password: " 1234" })).toEqual({
+      ok: true,
+      value: { message: "수정", password: " 1234" },
+    });
+  });
+
+  it("메시지 오류를 비밀번호 오류보다 먼저 알린다", () => {
+    expect(parseUpdateInput({ message: " ", password: "1" })).toEqual({
+      ok: false,
+      error: "메시지는 1~500자로 입력해주세요.",
+    });
+  });
+
+  it("짧은 글 비밀번호와 객체가 아닌 본문은 거부한다", () => {
+    expect(parseUpdateInput({ message: "수정", password: "123" })).toEqual({
+      ok: false,
+      error: "비밀번호는 4~50자로 입력해주세요.",
+    });
+    expect(parseUpdateInput(null)).toEqual({ ok: false, error: "잘못된 요청입니다." });
+  });
+});
+
+describe("parseEntryId", () => {
+  it.each(["1", "42", "123456789012345678"])("글 번호 %j는 허용한다", (raw) => {
+    expect(parseEntryId(raw)).toEqual({ ok: true, value: raw });
+  });
+
+  it.each(["0", "-1", "01", "1.5", "abc", "", "1234567890123456789"])("글 번호 %j는 거부한다", (raw) => {
+    expect(parseEntryId(raw)).toEqual({ ok: false, error: "잘못된 글 번호입니다." });
   });
 });

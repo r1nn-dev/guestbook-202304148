@@ -6,6 +6,7 @@ export const LIMITS = {
 
 export const ERRORS = {
   badRequest: "잘못된 요청입니다.",
+  badId: "잘못된 글 번호입니다.",
   name: `이름은 ${LIMITS.name.min}~${LIMITS.name.max}자로 입력해주세요.`,
   message: `메시지는 ${LIMITS.message.min}~${LIMITS.message.max}자로 입력해주세요.`,
   password: `비밀번호는 ${LIMITS.password.min}~${LIMITS.password.max}자로 입력해주세요.`,
@@ -16,6 +17,7 @@ export const ERRORS = {
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export type CreateInput = { name: string; message: string; password: string };
+export type UpdateInput = { message: string; password: string };
 
 type Limit = { min: number; max: number };
 
@@ -52,4 +54,19 @@ export function parseCreateInput(body: unknown): Result<CreateInput> {
   const password = checkPassword(body.password);
   if (!password.ok) return password;
   return { ok: true, value: { name: name.value, message: message.value, password: password.value } };
+}
+
+// 작성자 이름은 고칠 수 없으므로 본문에 들어와도 보지 않는다.
+export function parseUpdateInput(body: unknown): Result<UpdateInput> {
+  if (!isRecord(body)) return { ok: false, error: ERRORS.badRequest };
+  const message = checkTrimmed(body.message, LIMITS.message, ERRORS.message);
+  if (!message.ok) return message;
+  const password = checkPassword(body.password);
+  if (!password.ok) return password;
+  return { ok: true, value: { message: message.value, password: password.value } };
+}
+
+// bigserial 글 번호. 18자리까지만 받아 bigint 범위를 넘는 값이 DB 오류가 되지 않게 한다.
+export function parseEntryId(raw: string): Result<string> {
+  return /^[1-9]\d{0,17}$/.test(raw) ? { ok: true, value: raw } : { ok: false, error: ERRORS.badId };
 }
