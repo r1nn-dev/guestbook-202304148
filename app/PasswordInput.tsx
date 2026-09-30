@@ -27,14 +27,14 @@ export function PasswordInput({ value, onChange, placeholder, autoComplete, clas
         maxLength={LIMITS.password.max}
         required
         autoComplete={autoComplete}
-        className="w-full rounded border border-gray-300 py-2 pl-3 pr-10"
+        className="field pr-11"
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "비밀번호 숨기기" : "비밀번호 보기"}
         aria-pressed={visible}
-        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-gray-500 hover:text-gray-800"
+        className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-gray-400 hover:text-brand"
       >
         <svg
           aria-hidden="true"

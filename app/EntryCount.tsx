@@ -16,5 +16,7 @@ export async function EntryCount() {
   await connection(); // 빌드 때 미리 렌더링하지 않고 요청마다 센다.
   const count = await loadCount();
   if (count === null) return null;
-  return <span className="text-sm text-gray-600">총 {count}개</span>;
+  return (
+    <span className="rounded-full bg-gray-100 px-3.5 py-1.5 font-semibold text-gray-800">총 {count}개</span>
+  );
 }

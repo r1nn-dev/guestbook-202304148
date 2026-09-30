@@ -9,14 +9,17 @@ export default async function Home() {
   const entries = await listEntries();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <EntryForm />
       <section>
-        <h2 className="sr-only">방명록</h2>
+        {/* 총 글 수는 헤더에만 보여준다(같은 숫자를 두 번 보이지 않기). */}
+        <h2 className="mb-3 text-lg font-bold tracking-tight">방명록</h2>
         {entries.length === 0 ? (
-          <p className="text-gray-500">아직 글이 없습니다. 첫 글을 남겨보세요.</p>
+          <p className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center text-gray-500">
+            아직 글이 없습니다. 첫 글을 남겨보세요.
+          </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white">
             {entries.map((entry) => (
               // 수정되면 key가 바뀌어 수정 패널의 상태가 새 메시지로 초기화된다.
               <EntryItem

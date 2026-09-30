@@ -23,8 +23,11 @@ export function EntryForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h2 className="font-semibold">글 남기기</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
+      <div>
+        <h2 className="text-lg font-bold tracking-tight">글 남기기</h2>
+        <p className="mt-1 text-sm text-gray-500">글 비밀번호를 기억해 두면 나중에 수정하거나 삭제할 수 있어요.</p>
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           value={name}
@@ -32,7 +35,7 @@ export function EntryForm() {
           placeholder={`작성자 이름 (${LIMITS.name.max}자 이내)`}
           maxLength={LIMITS.name.max}
           required
-          className="flex-1 rounded border border-gray-300 px-3 py-2"
+          className="field flex-1"
         />
         <PasswordInput
           value={password}
@@ -48,14 +51,12 @@ export function EntryForm() {
         submitDisabled={submitDisabled}
         placeholder={`메시지 (${LIMITS.message.max}자 이내, Ctrl+Enter로 등록)`}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitDisabled}
-        className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
-      >
-        {pending ? "등록 중…" : "등록"}
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-red-600">{error}</p>
+        <button type="submit" disabled={submitDisabled} className="btn-primary shrink-0 px-5 py-2.5">
+          {pending ? "등록 중…" : "등록"}
+        </button>
+      </div>
     </form>
   );
 }

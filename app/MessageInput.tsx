@@ -39,9 +39,9 @@ export function MessageInput({ value, onChange, submitDisabled, placeholder, row
         placeholder={placeholder}
         required
         rows={rows}
-        className="w-full rounded border border-gray-300 px-3 py-2"
+        className="field resize-y"
       />
-      <p className={`text-right text-xs ${tooLong ? "font-semibold text-red-600" : "text-gray-500"}`}>
+      <p className={`mt-1 text-right text-xs tabular-nums ${tooLong ? "font-semibold text-red-600" : "text-gray-400"}`}>
         {count}/{LIMITS.message.max}
       </p>
     </div>

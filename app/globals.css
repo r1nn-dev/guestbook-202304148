@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand: #5b3ff6;
+  --color-brand-strong: #4a2fe0;
+  --color-brand-soft: #efecff;
+  --color-page: #f6f7f9;
+  --font-sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* 입력칸 공통 모양 */
+@utility field {
+  @apply w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[15px] transition outline-none placeholder:text-gray-400 focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand-soft;
+}
+
+/* 주 버튼(등록·저장) */
+@utility btn-primary {
+  @apply rounded-xl bg-brand text-sm font-semibold text-white transition hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-40;
+}
