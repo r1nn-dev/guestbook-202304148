@@ -198,7 +198,7 @@ Status: ready-for-agent
 ## Out of Scope
 
 - 회원가입, 로그인, 세션
-- 비밀번호 분실 시 복구, 관리자 삭제·관리 화면
+- 비밀번호 분실 시 복구, 관리자 삭제·관리 화면 (강제 삭제는 ADR 0003과 `.scratch/guestbook-extras/spec.md`로 대체됨. 관리 화면은 여전히 범위 밖)
 - 작성자 이름 수정
 - 페이지네이션, 무한 스크롤, 검색
 - 스팸 방지, rate limit, CAPTCHA
