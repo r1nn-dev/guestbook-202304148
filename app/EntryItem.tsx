@@ -1,9 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { sendJson } from "@/lib/api-client";
 import { LIMITS } from "@/lib/validation";
+import { useApiSubmit } from "./useApiSubmit";
 
 type Props = {
   id: string;
@@ -15,37 +14,34 @@ type Props = {
 
 type Mode = "view" | "edit" | "delete";
 
+// 수정·삭제 패널마다 다른 부분을 한곳에 모은다.
+const PANELS = {
+  edit: { method: "PATCH", submitLabel: "저장", submitClass: "bg-gray-900", showsDraft: true },
+  delete: { method: "DELETE", submitLabel: "삭제", submitClass: "bg-red-600", showsDraft: false },
+} as const;
+
 export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("view");
   const [draft, setDraft] = useState(message);
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, error, setError, submit } = useApiSubmit();
+  const panel = mode === "view" ? null : PANELS[mode];
 
-  function open(next: Mode) {
+  function switchMode(next: Mode) {
     setMode(next);
     setDraft(message);
     setPassword("");
     setError(null);
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setError(null);
-    const result =
-      mode === "edit"
-        ? await sendJson(`/api/entries/${id}`, "PATCH", { message: draft, password })
-        : await sendJson(`/api/entries/${id}`, "DELETE", { password });
-    setPending(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    setMode("view");
-    setPassword("");
-    router.refresh();
+    if (!panel) return;
+    const body = panel.showsDraft ? { message: draft, password } : { password };
+    submit({ url: `/api/entries/${id}`, method: panel.method, body }, () => {
+      setMode("view");
+      setPassword("");
+    });
   }
 
   return (
@@ -58,28 +54,31 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
         </span>
       </div>
 
-      {mode !== "edit" && <p className="mt-2 whitespace-pre-wrap break-words">{message}</p>}
+      {!panel?.showsDraft && <p className="mt-2 whitespace-pre-wrap wrap-break-word">{message}</p>}
 
-      {mode === "view" ? (
+      {panel === null ? (
         <div className="mt-3 flex gap-3 text-sm text-gray-600">
-          <button type="button" onClick={() => open("edit")} className="hover:underline">
+          <button type="button" onClick={() => switchMode("edit")} className="hover:underline">
             수정
           </button>
-          <button type="button" onClick={() => open("delete")} className="hover:underline">
+          <button type="button" onClick={() => switchMode("delete")} className="hover:underline">
             삭제
           </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-          {mode === "edit" && (
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={LIMITS.message.max}
-              required
-              rows={3}
-              className="w-full rounded border border-gray-300 px-3 py-2"
-            />
+          {panel.showsDraft && (
+            <>
+              <p className="text-xs text-gray-500">작성자 이름은 수정할 수 없고, 메시지만 수정할 수 있습니다.</p>
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                maxLength={LIMITS.message.max}
+                required
+                rows={3}
+                className="w-full rounded border border-gray-300 px-3 py-2"
+              />
+            </>
           )}
           <div className="flex flex-wrap gap-2">
             <input
@@ -96,16 +95,16 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
             <button
               type="submit"
               disabled={pending}
-              className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
-                mode === "delete" ? "bg-red-600" : "bg-gray-900"
-              }`}
+              className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${panel.submitClass}`}
             >
-              {mode === "edit" ? "저장" : "삭제"}
+              {panel.submitLabel}
             </button>
+            {/* 처리 중에 패널을 닫으면 돌아온 오류 안내가 보이지 않으므로 취소도 막는다. */}
             <button
               type="button"
-              onClick={() => open("view")}
-              className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+              onClick={() => switchMode("view")}
+              disabled={pending}
+              className="rounded border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
             >
               취소
             </button>

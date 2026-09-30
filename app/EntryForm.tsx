@@ -1,32 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { sendJson } from "@/lib/api-client";
 import { LIMITS } from "@/lib/validation";
+import { useApiSubmit } from "./useApiSubmit";
 
 export function EntryForm() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, error, submit } = useApiSubmit();
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setError(null);
-    const result = await sendJson("/api/entries", "POST", { name, message, password });
-    setPending(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    setName("");
-    setMessage("");
-    setPassword("");
-    router.refresh();
+    submit({ url: "/api/entries", method: "POST", body: { name, message, password } }, () => {
+      setName("");
+      setMessage("");
+      setPassword("");
+    });
   }
 
   return (
@@ -36,7 +26,7 @@ export function EntryForm() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={`이름 (${LIMITS.name.max}자 이내)`}
+          placeholder={`작성자 이름 (${LIMITS.name.max}자 이내)`}
           maxLength={LIMITS.name.max}
           required
           className="flex-1 rounded border border-gray-300 px-3 py-2"

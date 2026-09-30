@@ -9,6 +9,10 @@ export type Entry = {
   updatedAt: string | null;
 };
 
+// select *는 쓰지 않는다. 응답에 나가는 컬럼은 이 한 곳에서만 정해 password_hash가 새지 않게 한다.
+// 고정 문자열이라 unsafe로 끼워 넣어도 안전하다.
+const ENTRY_COLUMNS = sql.unsafe("id, name, message, created_at, updated_at");
+
 function toEntry(row: Record<string, unknown>): Entry {
   return {
     id: String(row.id),
@@ -19,10 +23,9 @@ function toEntry(row: Record<string, unknown>): Entry {
   };
 }
 
-// select *는 쓰지 않는다. 컬럼을 하나하나 지정해 password_hash가 새지 않게 한다.
 export async function listEntries(): Promise<Entry[]> {
   const rows = await sql`
-    select id, name, message, created_at, updated_at
+    select ${ENTRY_COLUMNS}
     from entries
     order by created_at desc, id desc
   `;
@@ -33,7 +36,7 @@ export async function createEntry(name: string, message: string, passwordHash: s
   const rows = await sql`
     insert into entries (name, message, password_hash)
     values (${name}, ${message}, ${passwordHash})
-    returning id, name, message, created_at, updated_at
+    returning ${ENTRY_COLUMNS}
   `;
   return toEntry(rows[0]);
 }
@@ -49,7 +52,7 @@ export async function updateMessage(id: string, message: string): Promise<Entry 
     update entries
     set message = ${message}, updated_at = now()
     where id = ${id}
-    returning id, name, message, created_at, updated_at
+    returning ${ENTRY_COLUMNS}
   `;
   return rows.length === 0 ? null : toEntry(rows[0]);
 }

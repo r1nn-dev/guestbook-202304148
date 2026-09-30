@@ -12,6 +12,10 @@ export const ERRORS = {
   password: `비밀번호는 ${LIMITS.password.min}~${LIMITS.password.max}자로 입력해주세요.`,
   passwordMismatch: "비밀번호가 일치하지 않습니다.",
   notFound: "글을 찾을 수 없습니다.",
+  server: "서버 오류가 발생했습니다.",
+  // 화면(클라이언트)에서만 쓰는 안내
+  unknown: "요청을 처리하지 못했습니다.",
+  network: "서버에 연결하지 못했습니다.",
 } as const;
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -57,7 +61,7 @@ export function parseCreateInput(body: unknown): Result<CreateInput> {
   return { ok: true, value: { name: name.value, message: message.value, password: password.value } };
 }
 
-// 작성자 이름은 고칠 수 없으므로 본문에 들어와도 보지 않는다.
+// 작성자 이름은 고칠 수 없으므로 요청 본문에 들어와도 보지 않는다.
 export function parseUpdateInput(body: unknown): Result<UpdateInput> {
   if (!isRecord(body)) return { ok: false, error: ERRORS.badRequest };
   const message = checkTrimmed(body.message, LIMITS.message, ERRORS.message);

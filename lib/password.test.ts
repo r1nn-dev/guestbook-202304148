@@ -32,4 +32,9 @@ describe("verifyPassword", () => {
       expect(await verifyPassword("1234", stored)).toBe(false);
     },
   );
+
+  it("콜론으로 나뉜 조각이 셋 이상인 저장값은 맞는 비밀번호라도 거부한다", async () => {
+    const stored = await hashPassword("1234");
+    expect(await verifyPassword("1234", `${stored}:junk`)).toBe(false);
+  });
 });

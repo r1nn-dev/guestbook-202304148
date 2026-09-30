@@ -18,7 +18,7 @@ export default async function Home() {
         ) : (
           <ul className="space-y-3">
             {entries.map((entry) => (
-              // 수정되면 key가 바뀌어 편집 상태가 새 메시지로 초기화된다.
+              // 수정되면 key가 바뀌어 수정 패널의 상태가 새 메시지로 초기화된다.
               <EntryItem
                 key={`${entry.id}-${entry.updatedAt ?? ""}`}
                 id={entry.id}
