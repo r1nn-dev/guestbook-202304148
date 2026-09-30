@@ -28,3 +28,12 @@ export async function listEntries(): Promise<Entry[]> {
   `;
   return rows.map(toEntry);
 }
+
+export async function createEntry(name: string, message: string, passwordHash: string): Promise<Entry> {
+  const rows = await sql`
+    insert into entries (name, message, password_hash)
+    values (${name}, ${message}, ${passwordHash})
+    returning id, name, message, created_at, updated_at
+  `;
+  return toEntry(rows[0]);
+}
