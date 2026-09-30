@@ -13,7 +13,7 @@ type Props = {
   edited: boolean;
 };
 
-type Mode = "view" | "edit";
+type Mode = "view" | "edit" | "delete";
 
 export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
   const router = useRouter();
@@ -34,7 +34,10 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
     event.preventDefault();
     setPending(true);
     setError(null);
-    const result = await sendJson(`/api/entries/${id}`, "PATCH", { message: draft, password });
+    const result =
+      mode === "edit"
+        ? await sendJson(`/api/entries/${id}`, "PATCH", { message: draft, password })
+        : await sendJson(`/api/entries/${id}`, "DELETE", { password });
     setPending(false);
     if (!result.ok) {
       setError(result.error);
@@ -55,25 +58,29 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
         </span>
       </div>
 
+      {mode !== "edit" && <p className="mt-2 whitespace-pre-wrap break-words">{message}</p>}
+
       {mode === "view" ? (
-        <>
-          <p className="mt-2 whitespace-pre-wrap break-words">{message}</p>
-          <div className="mt-3 flex gap-3 text-sm text-gray-600">
-            <button type="button" onClick={() => open("edit")} className="hover:underline">
-              수정
-            </button>
-          </div>
-        </>
+        <div className="mt-3 flex gap-3 text-sm text-gray-600">
+          <button type="button" onClick={() => open("edit")} className="hover:underline">
+            수정
+          </button>
+          <button type="button" onClick={() => open("delete")} className="hover:underline">
+            삭제
+          </button>
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-3 space-y-2">
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            maxLength={LIMITS.message.max}
-            required
-            rows={3}
-            className="w-full rounded border border-gray-300 px-3 py-2"
-          />
+          {mode === "edit" && (
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={LIMITS.message.max}
+              required
+              rows={3}
+              className="w-full rounded border border-gray-300 px-3 py-2"
+            />
+          )}
           <div className="flex flex-wrap gap-2">
             <input
               type="password"
@@ -89,9 +96,11 @@ export function EntryItem({ id, name, message, createdAtText, edited }: Props) {
             <button
               type="submit"
               disabled={pending}
-              className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              className={`rounded px-3 py-1.5 text-sm text-white disabled:opacity-50 ${
+                mode === "delete" ? "bg-red-600" : "bg-gray-900"
+              }`}
             >
-              저장
+              {mode === "edit" ? "저장" : "삭제"}
             </button>
             <button
               type="button"

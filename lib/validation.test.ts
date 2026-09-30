@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ERRORS, parseCreateInput, parseEntryId, parseUpdateInput } from "./validation";
+import { ERRORS, parseCreateInput, parseDeleteInput, parseEntryId, parseUpdateInput } from "./validation";
 
 const valid = { name: "하린", message: "안녕하세요", password: "1234" };
 
@@ -105,5 +105,22 @@ describe("parseEntryId", () => {
 
   it.each(["0", "-1", "01", "1.5", "abc", "", "1234567890123456789"])("글 번호 %j는 거부한다", (raw) => {
     expect(parseEntryId(raw)).toEqual({ ok: false, error: "잘못된 글 번호입니다." });
+  });
+});
+
+describe("parseDeleteInput", () => {
+  it("글 비밀번호만 보고, 공백을 제거하지 않는다", () => {
+    expect(parseDeleteInput({ password: " 1234" })).toEqual({ ok: true, value: { password: " 1234" } });
+  });
+
+  it("너무 짧은 글 비밀번호는 거부한다", () => {
+    expect(parseDeleteInput({ password: "12" })).toEqual({
+      ok: false,
+      error: "비밀번호는 4~50자로 입력해주세요.",
+    });
+  });
+
+  it("본문이 없으면 잘못된 요청이다", () => {
+    expect(parseDeleteInput(undefined)).toEqual({ ok: false, error: "잘못된 요청입니다." });
   });
 });

@@ -18,6 +18,7 @@ export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export type CreateInput = { name: string; message: string; password: string };
 export type UpdateInput = { message: string; password: string };
+export type DeleteInput = { password: string };
 
 type Limit = { min: number; max: number };
 
@@ -69,4 +70,11 @@ export function parseUpdateInput(body: unknown): Result<UpdateInput> {
 // bigserial 글 번호. 18자리까지만 받아 bigint 범위를 넘는 값이 DB 오류가 되지 않게 한다.
 export function parseEntryId(raw: string): Result<string> {
   return /^[1-9]\d{0,17}$/.test(raw) ? { ok: true, value: raw } : { ok: false, error: ERRORS.badId };
+}
+
+export function parseDeleteInput(body: unknown): Result<DeleteInput> {
+  if (!isRecord(body)) return { ok: false, error: ERRORS.badRequest };
+  const password = checkPassword(body.password);
+  if (!password.ok) return password;
+  return { ok: true, value: { password: password.value } };
 }

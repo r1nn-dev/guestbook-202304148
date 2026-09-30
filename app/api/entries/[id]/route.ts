@@ -1,7 +1,7 @@
-import { findPasswordHash, updateMessage } from "@/lib/entries";
+import { deleteEntry, findPasswordHash, updateMessage } from "@/lib/entries";
 import { errorResponse, readJson } from "@/lib/http";
 import { verifyPassword } from "@/lib/password";
-import { ERRORS, parseEntryId, parseUpdateInput } from "@/lib/validation";
+import { ERRORS, parseDeleteInput, parseEntryId, parseUpdateInput } from "@/lib/validation";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -22,4 +22,20 @@ export async function PATCH(request: Request, { params }: Context) {
   const entry = await updateMessage(id.value, input.value.message);
   if (entry === null) return errorResponse(404, ERRORS.notFound);
   return Response.json(entry, { status: 200 });
+}
+
+export async function DELETE(request: Request, { params }: Context) {
+  const id = parseEntryId((await params).id);
+  if (!id.ok) return errorResponse(400, id.error);
+  const input = parseDeleteInput(await readJson(request));
+  if (!input.ok) return errorResponse(400, input.error);
+
+  const stored = await findPasswordHash(id.value);
+  if (stored === null) return errorResponse(404, ERRORS.notFound);
+  if (!(await verifyPassword(input.value.password, stored))) {
+    return errorResponse(403, ERRORS.passwordMismatch);
+  }
+
+  if (!(await deleteEntry(id.value))) return errorResponse(404, ERRORS.notFound);
+  return new Response(null, { status: 204 });
 }

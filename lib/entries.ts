@@ -53,3 +53,9 @@ export async function updateMessage(id: string, message: string): Promise<Entry 
   `;
   return rows.length === 0 ? null : toEntry(rows[0]);
 }
+
+// 비밀번호 확인과 삭제 사이에 글이 지워졌으면 false
+export async function deleteEntry(id: string): Promise<boolean> {
+  const rows = await sql`delete from entries where id = ${id} returning id`;
+  return rows.length > 0;
+}
